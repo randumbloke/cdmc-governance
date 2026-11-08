@@ -1,0 +1,105 @@
+# ci-checks (design §6.3): one aggregate job on every pull request against main and every push
+# to main. No Google Cloud credential: no id-token, no authentication action (design §6.2).
+# Third-party actions are pinned by commit SHA; tools by version, with their published checksums.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  TERRAFORM_VERSION: "1.16.3"
+  TFLINT_VERSION: "0.55.1"   # VERIFY IN BUILD (no VA ID): tool versions current at first run
+  TRIVY_VERSION: "0.58.2"
+  GITLEAKS_VERSION: "8.21.2"
+  UV_VERSION: "0.9.5"
+
+jobs:
+  ci-checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        # actions/checkout v4.2.2. VERIFY IN BUILD (no VA ID): SHA matches the v4.2.2 tag.
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install Terraform
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          base="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}"
+          curl -fsSLO "${base}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+          curl -fsSLO "${base}/terraform_${TERRAFORM_VERSION}_SHA256SUMS"
+          grep "linux_amd64.zip" "terraform_${TERRAFORM_VERSION}_SHA256SUMS" | sha256sum -c -
+          unzip -q "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -d "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Install tflint, Trivy, gitleaks and uv
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p bin
+          curl -fsSLO "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip"
+          curl -fsSLO "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/checksums.txt"
+          grep " tflint_linux_amd64.zip$" checksums.txt | sha256sum -c -
+          unzip -qo tflint_linux_amd64.zip -d bin
+          curl -fsSLO "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSLO "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_checksums.txt"
+          grep " trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz$" "trivy_${TRIVY_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -C bin trivy
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -C bin gitleaks
+          curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_INSTALL_DIR="$RUNNER_TEMP/bin" sh
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: terraform init, validate and test (each root module)
+        run: |
+          set -euo pipefail
+          for dir in tiers/* envs/*/; do
+            [ -f "$dir/backend.tf" ] || continue
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -backend=false -lockfile=readonly -input=false
+            terraform -chdir="$dir" validate
+            terraform -chdir="$dir" test
+            echo "::endgroup::"
+          done
+
+      - name: tflint (Google ruleset)
+        run: |
+          set -euo pipefail
+          tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+          for dir in tiers/* envs/*/; do
+            [ -f "$dir/backend.tf" ] || continue
+            tflint --chdir="$dir" --config "$GITHUB_WORKSPACE/.tflint.hcl"
+          done
+
+      - name: Misconfiguration scan (Trivy)
+        run: trivy config --exit-code 1 --severity HIGH,CRITICAL --skip-dirs scratch_schema .
+
+      - name: Repository checks (root-module comparison, projectReaders, IAM ownership, dataset access, local execution, image digests, lock files, workflows, schemas)
+        run: |
+          uv sync --frozen
+          uv run python scripts/ci_checks.py
+          uv run pytest -q
+
+      - name: Secret scan (commits in the pull request or push)
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            range="${{ github.event.before }}..${{ github.sha }}"
+            if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then range="${{ github.sha }}"; fi
+          fi
+          gitleaks git --redact --log-opts="$range" .
