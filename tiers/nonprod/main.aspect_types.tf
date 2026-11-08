@@ -1,5 +1,7 @@
 # Custom aspect types (design §5.11) in the hub at location global, and their IAM: each type
 # grants aspectTypes.use to its writer's service account only (design §1.5.2, §2.4.1; P6-25).
+# VERIFY IN BUILD (VA-42, VA-76): custom aspects are refused without aspectTypes.use, and
+# roles/dataplex.aspectTypeUser plus ddaAspectWriter is enough for the writer.
 
 locals {
   aspect_source = yamldecode(file("${path.module}/../../aspect_types/cdmc_aspect_types.yaml"))

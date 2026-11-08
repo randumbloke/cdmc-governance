@@ -59,7 +59,7 @@ locals {
   evaluator_sa = "evaluator-${var.env}@${local.hub_project_id}.iam.gserviceaccount.com"
 
   # Hub Pub/Sub service agent (BigQuery subscriptions, dead letters). The platform tier stack
-  # publishes it; the computed form is the documented agent address (VA-101).
+  # publishes it; the computed form is the documented agent address. VERIFY IN BUILD (VA-101).
   pubsub_agent = try(
     local.platform_tier.service_agents["pubsub"],
     "service-${local.hub_project_number}@gcp-sa-pubsub.iam.gserviceaccount.com",
@@ -67,6 +67,8 @@ locals {
 
   # Data projects of this environment: the core data project and every analytics project
   # (key "core" or <business>, outputs_platform_env). A shared analytics project appears once.
+  # Agent emails fall back to the computed form when the platform outputs omit them.
+  # VERIFY IN BUILD (VA-101, VA-93): the agents exist before the grants below.
   data_projects = {
     for p in distinct([for k, v in local.platform_env.projects : v.project_id]) : p => [
       for k, v in local.platform_env.projects : v if v.project_id == p
