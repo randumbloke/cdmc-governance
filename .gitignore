@@ -6,3 +6,6 @@ crash.log
 scratch_schema/
 .local/
 envs/dev/override_local.tf
+__pycache__/
+.pytest_cache/
+.venv/
