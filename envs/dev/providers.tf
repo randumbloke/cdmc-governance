@@ -1,11 +1,11 @@
 terraform {
-  # Contracts §6: Terraform 1.16.x, hashicorp/google 8.10.0 exactly, hashicorp/http ~> 3.6.
-  required_version = "~> 1.16"
+  # Design §6.11 (OD-4): Terraform >= 1.17, hashicorp/google ~> 8.10, hashicorp/http ~> 3.6.
+  required_version = ">= 1.17"
 
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "8.10.0"
+      version = "~> 8.10"
     }
     # Used only inside dda-platform//modules/data_domain_shim/domain (data.http.domain reads a
     # domain's policyMember, design §2.3.2); declared here so the lock file pins it.

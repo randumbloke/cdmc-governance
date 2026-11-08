@@ -146,8 +146,9 @@ def check_lock_files(root: Path) -> list[str]:
         for tf in module.glob("*.tf"):
             body = strip_comments(tf.read_text())
             for m in re.finditer(r'source\s*=\s*"hashicorp/google(?:-beta)?"\s*version\s*=\s*"([^"]+)"', body):
-                if m.group(1) != "8.10.0":
-                    findings.append(f"provider pin: {tf} pins google {m.group(1)}, expected 8.10.0")
+                # Design §6.11 (OD-4): constraint ~> 8.10; the lock file fixes the exact version.
+                if m.group(1) != "~> 8.10":
+                    findings.append(f"provider pin: {tf} pins google {m.group(1)}, expected ~> 8.10")
     return findings
 
 

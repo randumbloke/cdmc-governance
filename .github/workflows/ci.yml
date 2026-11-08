@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  TERRAFORM_VERSION: "1.16.3"
+  TERRAFORM_VERSION: "1.17.1"
   TFLINT_VERSION: "0.55.1"   # VERIFY IN BUILD (no VA ID): tool versions current at first run
   TRIVY_VERSION: "0.58.2"
   GITLEAKS_VERSION: "8.21.2"

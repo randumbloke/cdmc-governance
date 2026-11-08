@@ -1,12 +1,12 @@
 terraform {
-  # Contracts §6: Terraform 1.16.x and hashicorp/google 8.10.0 exactly. (The design's §6.11
+  # Design §6.11 (OD-4): Terraform >= 1.17, hashicorp/google ~> 8.10. (The design's §6.11
   # example shows ">= 1.17" and "~> 8.10"; the phase 1 contracts pin these values.)
-  required_version = "~> 1.16"
+  required_version = ">= 1.17"
 
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "8.10.0"
+      version = "~> 8.10"
     }
   }
 }
