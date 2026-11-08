@@ -56,7 +56,7 @@ resource "google_pubsub_subscription" "findings_bigquery" {
     use_topic_schema    = var.findings_subscription_schema == "topic"
     use_table_schema    = var.findings_subscription_schema == "table"
     write_metadata      = false
-    drop_unknown_fields = false
+    drop_unknown_fields = true
   }
 
   dynamic "dead_letter_policy" {

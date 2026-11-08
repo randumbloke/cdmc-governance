@@ -26,7 +26,8 @@ envs/dev/                             environment stack: domains and subdomains 
                                       domains/dev.json, hub datasets and their grants, cdmc_report tables and
                                       views, discovery configurations, evaluator service and sweep job,
                                       feed-evaluator push subscription, findings BigQuery subscription,
-                                      Eventarc triggers on products/ and lineage/, Cloud Scheduler sweep;
+                                      Eventarc triggers on products/ and lineage/, Cloud Scheduler sweep,
+                                      §5.8 alert policies (dead letters, findings backlog, sweep);
                                       later-phase resources behind §6.17 flags; writes
                                       outputs/cdmc-governance/dev/outputs.json
   sql/                                reporting view queries (§5.2)
@@ -103,8 +104,21 @@ digest that the `kc-control-plane` image build published in `outputs/kc-control-
   `DQ_RESULTS_TABLE`, `ROLLUP_QUEUE`, `ROLLUP_HANDLER_URL`, `ROLLUP_INVOKER_SA`,
   `ROLLUP_WINDOW_SECONDS`, `DATA_PROJECTS`, `SINGLE_DEPLOYER`, `SCHEDULER_TIME_ZONE`,
   `EVALUATOR_MODULES`. Routes: `/events/kc` (feed-evaluator push), `/events/state` (Eventarc),
-  `/tasks/rollup` (Cloud Tasks). The sweep job runs the same image with command
-  `evaluator-sweep`, 20 tasks.
+  `/tasks/rollup` (Cloud Tasks). The sweep job runs the separate `evaluator-sweep` image
+  (Dockerfile target `job`), 20 tasks. Findings messages (`to_message()`) map onto the
+  `events` columns; dda-platform creates the `findings` topic without a Pub/Sub schema, so the
+  BigQuery subscription uses the table schema (`findings_subscription_schema = "table"`).
+
+## Integration mismatches still open (other repositories)
+
+- kc-control-plane `cdmc_common.tasks` sets the Cloud Tasks OIDC audience to the full handler
+  URL (`.../tasks/rollup`); Cloud Run expects the service URL (or a custom audience). Check at
+  AT-12, or set the audience to the service root.
+- dda-platform `envs/dev/main.feeds.tf` names the custom aspect type `cdmc-classification` in
+  `feed-evaluator`, but this repository's tier stack is applied after dda-platform (§6.14.1);
+  the first platform apply may be refused until the aspect type exists (marked VA-09 there).
+- dda-customer `envs/dev/core` does not enforce §6.14.1's precondition that each dataset's
+  project is listed in `discovery_configs` of `outputs/cdmc-governance/dev/outputs.json`.
 
 ## Open points (design conflicts found while drafting)
 
@@ -148,5 +162,5 @@ digest that the `kc-control-plane` image build published in `outputs/kc-control-
 | VA-99 | `envs/dev/main.events.tf` | `ddaSubscriptionAdmin` sufficient |
 | AT-05, AT-06 | `tiers/nonprod/main.state_bucket.tf` | objectCreator cannot overwrite (split accounts) |
 | no VA ID | `envs/dev/main.events.tf` | Eventarc `match-path-pattern` on Storage audit `resourceName`; trigger location |
-| no VA ID | `envs/images.json`, `envs/dev/main.evaluator.tf` | placeholder digest until the first image build; `evaluator-sweep` on the image PATH |
+| no VA ID | `envs/images.json` | placeholder digests until the first image build |
 | no VA ID | `.github/workflows/ci.yml`, `.tflint.hcl` | action SHA and tool versions |

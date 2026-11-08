@@ -94,10 +94,9 @@ resource "google_cloud_run_v2_job" "evaluator_sweep" {
       max_retries     = 1
 
       containers {
-        image = local.images["evaluator"]
-        # Same image as the service; the sweep entry point is the evaluator-sweep script of
-        # kc-control-plane's pyproject. VERIFY IN BUILD (no VA ID): the image puts it on PATH.
-        command = ["evaluator-sweep"]
+        # kc-control-plane builds a separate job image (build/Dockerfile target `job`,
+        # CMD evaluator-sweep).
+        image = local.images["evaluator-sweep"]
 
         dynamic "env" {
           for_each = local.evaluator_env

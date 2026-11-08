@@ -41,5 +41,8 @@ schedule_times = {
   reconciler_expiry = "0 * * * *"
 }
 
+# Recipients of the §5.8 alerts (governance engineers, design §1.5.1).
+alert_notification_emails = ["dda-governance-engineers@mikegyoung.joonix.net"]
+
 # Dev only: lets the stack be destroyed in reverse apply order (change design, rollback).
 deletion_protection = false

@@ -104,7 +104,9 @@ variable "push_delivery" {
 variable "findings_subscription_schema" {
   description = "How the findings BigQuery subscription maps messages: \"topic\" uses the topic schema cdmc-finding-v1 (design §5.2); \"table\" uses the events table schema, for a topic created without a schema."
   type        = string
-  default     = "topic"
+  # dda-platform creates the findings topic without a Pub/Sub schema, so the table schema maps
+  # the JSON messages (the evaluator's to_message() fields equal the events columns).
+  default = "table"
   validation {
     condition     = contains(["topic", "table"], var.findings_subscription_schema)
     error_message = "findings_subscription_schema is topic or table."
@@ -131,6 +133,18 @@ variable "compliance_reviewers_group" {
   description = "Group granted read on cdmc_report (design §1.5.1), for example dda-compliance-reviewers@<group domain>. Empty: no grant (the group is not in the phase 1 asks)."
   type        = string
   default     = ""
+}
+
+variable "alert_notification_emails" {
+  description = "Email addresses of the governance engineers, the recipients of the §5.8 alerts. One email notification channel each."
+  type        = list(string)
+  default     = []
+}
+
+variable "alert_notification_channels" {
+  description = "Existing notification channel IDs added to every §5.8 alert policy."
+  type        = list(string)
+  default     = []
 }
 
 variable "deletion_protection" {

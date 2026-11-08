@@ -135,6 +135,35 @@ run "phase1_plan" {
     condition     = google_cloud_scheduler_job.evaluator_sweep.schedule == "0 2 * * *" && google_cloud_scheduler_job.evaluator_sweep.time_zone == "Australia/Sydney"
     error_message = "Daily sweep at 02:00 Australia/Sydney (design §6.16.2)."
   }
+
+  assert {
+    condition     = keys(google_monitoring_alert_policy.dead_letter) == ["kc-evaluator"]
+    error_message = "One dead-letter alert per published -dlq topic (design §5.8)."
+  }
+  assert {
+    condition     = strcontains(google_monitoring_alert_policy.dead_letter["kc-evaluator"].conditions[0].condition_threshold[0].filter, "topic_id = \"kc-evaluator-dev-dlq\"")
+    error_message = "The dead-letter alert watches the short topic ID."
+  }
+  assert {
+    condition     = google_monitoring_alert_policy.findings_backlog.conditions[0].condition_threshold[0].threshold_value == 600
+    error_message = "findings backlog age alert at 10 minutes (design §5.8)."
+  }
+  assert {
+    condition     = strcontains(google_monitoring_alert_policy.sweep_failed.conditions[0].condition_threshold[0].filter, "job_name = \"evaluator-sweep-dev\"")
+    error_message = "Sweep failure alert on the dev sweep job."
+  }
+  assert {
+    condition     = length(google_monitoring_notification_channel.email) == 0 && length(google_monitoring_alert_policy.sweep_not_started.conditions) == 1
+    error_message = "No channel without recipients; scheduler log alert present."
+  }
+  assert {
+    condition     = google_cloud_run_v2_job.evaluator_sweep.template[0].template[0].containers[0].image == local.images["evaluator-sweep"]
+    error_message = "The sweep job runs the evaluator-sweep image."
+  }
+  assert {
+    condition     = google_pubsub_subscription.findings_bigquery.bigquery_config[0].use_table_schema
+    error_message = "Findings subscription maps by table schema (topic has no schema)."
+  }
 }
 
 run "policy_tags_needs_gate" {
