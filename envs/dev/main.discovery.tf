@@ -80,12 +80,5 @@ resource "google_data_loss_prevention_discovery_config" "project" {
   ]
 }
 
-# Phase 2: the SDP agent of each data project publishes profile notifications (design §2.4.5).
-resource "google_pubsub_topic_iam_member" "sdp_profiles_publisher" {
-  for_each = var.components.sdp_notifications ? local.dlp_agent : {}
-
-  project = local.hub_project_id
-  topic   = local.topic["sdp-profiles"]
-  role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${each.value}"
-}
+# The SDP agents' publisher grants on sdp-profiles are made by dda-platform with the topic
+# (dda-platform envs/dev/main.topics.tf), so none is declared here.

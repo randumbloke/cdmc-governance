@@ -183,17 +183,24 @@ def check_infotype_rules(root: Path) -> list[str]:
 
 
 def check_aspect_types(root: Path) -> list[str]:
-    """Indexes are unique and contiguous enough to be stable; required shared fields present."""
+    """Field and enum indexes are unique and numbered 1..n in every record (design §5.11)."""
     findings = []
     src = yaml.safe_load((root / "aspect_types" / "cdmc_aspect_types.yaml").read_text())
+
+    def walk(type_id: str, path: str, record: dict) -> None:
+        fields = record.get("recordFields", [])
+        indexes = [f.get("index") for f in fields]
+        if sorted(i for i in indexes if isinstance(i, int)) != list(range(1, len(fields) + 1)):
+            findings.append(f"aspect types: {type_id}{path} field indexes are not unique 1..{len(fields)}")
+        for f in fields:
+            values = [v.get("index") for v in f.get("enumValues", [])]
+            if values and sorted(values) != list(range(1, len(values) + 1)):
+                findings.append(f"aspect types: {type_id}{path}.{f['name']} enum indexes are not 1..{len(values)}")
+            if f.get("type") == "record":
+                walk(type_id, f"{path}.{f['name']}", f)
+
     for type_id, t in src["aspect_types"].items():
-        indexes = [f["index"] for f in t["fields"]]
-        indexes += [t["shared_index"], t["shared_index"] + 1, t["shared_index"] + 2]
-        indexes += [f["index"] for f in t.get("trailing_fields", [])]
-        if len(indexes) != len(set(indexes)):
-            findings.append(f"aspect types: {type_id} reuses a field index")
-        if sorted(indexes) != list(range(1, len(indexes) + 1)):
-            findings.append(f"aspect types: {type_id} indexes are not 1..{len(indexes)}")
+        walk(type_id, "", t["metadataTemplate"])
     return findings
 
 

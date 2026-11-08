@@ -12,8 +12,8 @@ Phase 1 is `dev` only, with C12 and C14 (design §6.17).
 ## Layout
 
 ```text
-aspect_types/cdmc_aspect_types.yaml   the five custom aspect type templates (§5.11); vendored copy of
-                                      kc-control-plane src/cdmc_common/aspect_types/
+aspect_types/cdmc_aspect_types.yaml   the five custom aspect type templates (§5.11); verbatim copy of
+                                      kc-control-plane src/cdmc_common/aspect_types/ (commit f752247)
 classification/infotype_rules.yaml    the infoType rule table (§5.3.3)
 glossary/glossary.yaml                governance glossary: four categories of request-label terms (§4.2.1)
 schemas/infotype_rules.schema.json    schema of the rule table (CI)
@@ -97,13 +97,14 @@ digest that the `kc-control-plane` image build published in `outputs/kc-control-
   `projects/<hub>/locations/<home region>/queues/product-rollups-dev` (no queue field in the
   contract). Publisher grants for the Pub/Sub agent on `-dlq` topics are dda-platform's.
 - The domain shim's `policy_member` output is a string principal.
-- The evaluator image reads its configuration from environment variables (`DDA_ENV`,
-  `HUB_PROJECT_ID`, `HOME_REGION`, `REGIONS`, `STATE_BUCKET`, `CDMC_REPORT_DATASET`,
-  `DQ_RESULTS_DATASETS`, `DATA_PROJECTS`, `ASPECT_TYPES`, `FINDINGS_TOPIC`,
-  `NOTIFICATIONS_TOPIC`, `ROLLUP_QUEUE`, `ROLLUP_TARGET_URL`, `ROLLUP_WINDOW_MINUTES`,
-  `EVALUATOR_SA`, `EVALUATOR_MODULES`, `DOMAIN_PIPELINES`, `SINGLE_DEPLOYER`,
-  `EVALUATOR_MODE` = `service` or `sweep`) and serves `/events/feed` (Pub/Sub push) and
-  `/events/state-object` (Eventarc); the sweep job runs 20 tasks.
+- The evaluator image (kc-control-plane, commit 2ca1284) reads `cdmc_common.config.Settings`
+  from environment variables, all set in `envs/dev/main.evaluator.tf`: `DDA_ENV`,
+  `HUB_PROJECT_ID`, `REGION`, `CICD_PROJECT_ID`, `HUB_STATE_BUCKET`, `FINDINGS_TOPIC`,
+  `DQ_RESULTS_TABLE`, `ROLLUP_QUEUE`, `ROLLUP_HANDLER_URL`, `ROLLUP_INVOKER_SA`,
+  `ROLLUP_WINDOW_SECONDS`, `DATA_PROJECTS`, `SINGLE_DEPLOYER`, `SCHEDULER_TIME_ZONE`,
+  `EVALUATOR_MODULES`. Routes: `/events/kc` (feed-evaluator push), `/events/state` (Eventarc),
+  `/tasks/rollup` (Cloud Tasks). The sweep job runs the same image with command
+  `evaluator-sweep`, 20 tasks.
 
 ## Open points (design conflicts found while drafting)
 
@@ -147,5 +148,5 @@ digest that the `kc-control-plane` image build published in `outputs/kc-control-
 | VA-99 | `envs/dev/main.events.tf` | `ddaSubscriptionAdmin` sufficient |
 | AT-05, AT-06 | `tiers/nonprod/main.state_bucket.tf` | objectCreator cannot overwrite (split accounts) |
 | no VA ID | `envs/dev/main.events.tf` | Eventarc `match-path-pattern` on Storage audit `resourceName`; trigger location |
-| no VA ID | `envs/images.json` | placeholder digest until the first image build |
+| no VA ID | `envs/images.json`, `envs/dev/main.evaluator.tf` | placeholder digest until the first image build; `evaluator-sweep` on the image PATH |
 | no VA ID | `.github/workflows/ci.yml`, `.tflint.hcl` | action SHA and tool versions |

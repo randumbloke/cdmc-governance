@@ -4,89 +4,17 @@
 # roles/dataplex.aspectTypeUser plus ddaAspectWriter is enough for the writer.
 
 locals {
+  # Vendored single source (design §5.11): each type's metadataTemplate is passed as is.
   aspect_source = yamldecode(file("${path.module}/../../aspect_types/cdmc_aspect_types.yaml"))
 
-  # One field of a metadataTemplate (Dataplex v1 AspectTypeMetadataTemplate).
-  # Arrays and enums are expanded; required becomes constraints.required.
-  aspect_shared = local.aspect_source.shared_fields
+  aspect_templates = { for type_id, t in local.aspect_source.aspect_types : type_id => t.metadataTemplate }
 
-  aspect_templates = {
-    for type_id, t in local.aspect_source.aspect_types : type_id => {
-      name = type_id
-      type = "record"
-      recordFields = concat(
-        [for f in t.fields : merge(
-          {
-            name  = f.name
-            type  = f.type
-            index = f.index
-            annotations = {
-              displayName = f.display_name
-              description = f.description
-            }
-          },
-          { for k, v in { constraints = { required = true } } : k => v if try(f.required, false) },
-          { for k, v in { enumValues = [for i, v in try(f.values, []) : { name = v, index = i + 1 }] } : k => v if f.type == "enum" },
-          { for k, v in { arrayItems = { name = try(f.item_name, ""), type = try(f.item_type, "") } } : k => v if f.type == "array" },
-        )],
-        [
-          {
-            name        = "evaluation"
-            type        = "record"
-            index       = t.shared_index
-            constraints = { required = true }
-            annotations = {
-              displayName = local.aspect_shared.evaluation.display_name
-              description = local.aspect_shared.evaluation.description
-            }
-            recordFields = [for f in local.aspect_shared.evaluation.fields : {
-              name        = f.name
-              type        = f.type
-              index       = f.index
-              constraints = { required = true }
-              annotations = { displayName = f.display_name, description = f.description }
-            }]
-          },
-          {
-            name  = "narrative"
-            type  = "record"
-            index = t.shared_index + 1
-            annotations = {
-              displayName = local.aspect_shared.narrative.display_name
-              description = local.aspect_shared.narrative.description
-            }
-            recordFields = [for f in local.aspect_shared.narrative.fields : {
-              name        = f.name
-              type        = f.type
-              index       = f.index
-              annotations = { displayName = f.display_name, description = f.description }
-            }]
-          },
-          {
-            name        = "schema_version"
-            type        = "int"
-            index       = t.shared_index + 2
-            constraints = { required = true }
-            annotations = {
-              displayName = local.aspect_shared.schema_version.display_name
-              description = local.aspect_shared.schema_version.description
-            }
-          },
-        ],
-        [for f in try(t.trailing_fields, []) : merge(
-          {
-            name  = f.name
-            type  = f.type
-            index = f.index
-            annotations = {
-              displayName = f.display_name
-              description = f.description
-            }
-          },
-          { for k, v in { constraints = { required = true } } : k => v if try(f.required, false) },
-        )],
-      )
-    }
+  aspect_descriptions = {
+    "cdmc-classification"        = { display_name = "CDMC classification", description = "Classification level of a BigQuery table or column, with its provenance (C6). Writer: the classifier." }
+    "cdmc-provisioning-point"    = { display_name = "CDMC provisioning point", description = "Whether a BigQuery table is a provisioning point (C3). Writer: the C3 module of the control evaluator." }
+    "cdmc-lineage-evidence"      = { display_name = "CDMC lineage evidence", description = "Run-time and design-time ultimate sources of a BigQuery table (C14). Writer: the C14 module of the control evaluator." }
+    "cdmc-data-product-contract" = { display_name = "CDMC data product contract", description = "Owner inputs of a data product contract. Writer: the contract writer of the control evaluator." }
+    "cdmc-data-product-quality"  = { display_name = "CDMC data product quality", description = "Pooled quality score, status and freshness of a data product (C12). Writer: the C12 module of the control evaluator." }
   }
 
   # Writer of each aspect type (design §1.5.2). The classifier is phase 2 (design §6.17).
@@ -111,8 +39,8 @@ resource "google_dataplex_aspect_type" "cdmc" {
   project        = local.hub_project_id
   location       = "global"
   aspect_type_id = each.key
-  display_name   = local.aspect_source.aspect_types[each.key].display_name
-  description    = local.aspect_source.aspect_types[each.key].description
+  display_name   = local.aspect_descriptions[each.key].display_name
+  description    = local.aspect_descriptions[each.key].description
   labels         = local.labels_file.catalog
 
   metadata_template = jsonencode(each.value)

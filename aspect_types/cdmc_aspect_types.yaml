@@ -1,215 +1,554 @@
-# Custom aspect type templates (design §5.11).
-#
-# Vendored copy of kc-control-plane `src/cdmc_common/aspect_types/` (the one YAML source of
-# §5.11, which every writer validates its payload against). Keep the two in step: a change here
-# without the same change there makes the evaluator write payloads the template refuses.
-#
-# Rendering (tiers/<tier>/main.aspect_types.tf):
-#   - `fields` are the type-specific fields, each with its fixed `index`.
-#   - The three shared fields of §5.11.1 (`evaluation`, `narrative`, `schema_version`) are
-#     appended at `shared_index`, `shared_index + 1`, `shared_index + 2`.
-#   - `trailing_fields` follow the shared fields (only `schema_fingerprint`, index 11, on
-#     `cdmc-classification`).
-# Indexes never change once applied; a field is retired with `deprecated` and a new index
-# (reference architecture §4.4). Enum values are appended, never renumbered.
+# VENDORED from kc-control-plane src/cdmc_common/aspect_types/cdmc_aspect_types.yaml at commit
+# f752247 (design §5.11: one YAML source, which every writer validates against and Terraform
+# renders). Do not edit here: change kc-control-plane, then copy the file and update the commit.
+# CI (scripts/ci_checks.py) checks field indexes are unique and contiguous.
 
-shared_fields:
-  evaluation:
-    type: record
-    required: true
-    display_name: Evaluation
-    description: The authoritative evaluation record written by the writer path (D-01).
-    fields:
-      - name: evaluator_version
-        index: 1
-        type: string
-        required: true
-        display_name: Evaluator version
-        description: Module name and version, for example c12-rollup@1.3.0.
-      - name: evaluated_at
-        index: 2
-        type: datetime
-        required: true
-        display_name: Evaluated at
-        description: When the writer computed the values.
-      - name: source_ref
-        index: 3
-        type: string
-        required: true
-        display_name: Source reference
-        description: Resource name of the evidence the values were computed from.
-  narrative:
-    type: record
-    required: false
-    display_name: Narrative
-    description: Advisory record. Reserved; no component writes it in this version (P5-2).
-    fields:
-      - name: summary
-        index: 1
-        type: string
-        display_name: Summary
-        description: Generated explanation of the evaluation. Advisory only.
-      - name: model
-        index: 2
-        type: string
-        display_name: Model
-        description: Model that produced the summary.
-      - name: prompt_version
-        index: 3
-        type: string
-        display_name: Prompt version
-        description: Version of the prompt that produced the summary.
-      - name: authoritative
-        index: 4
-        type: bool
-        display_name: Authoritative
-        description: Always false. A narrative is never the basis of a control result.
-  schema_version:
-    type: int
-    required: true
-    display_name: Schema version
-    description: Version of the template the payload was written against. Starts at 1.
-
+# Five custom aspect templates (design §5.11). Single source: writers validate against it and
+# Terraform renders google_dataplex_aspect_type from it. Field and enum indexes never change.
+version: 1
+source: design §5.11 (single source; Terraform renders google_dataplex_aspect_type from it)
 aspect_types:
   cdmc-classification:
-    display_name: CDMC classification
-    description: Classification level of a BigQuery table or column, with its provenance (C6). Writer is the classifier.
-    shared_index: 8
-    fields:
+    metadataTemplate:
+      name: cdmc-classification
+      type: record
+      recordFields:
       - name: classification_level
-        index: 1
         type: enum
-        required: true
-        values: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED]
-        display_name: Classification level
-        description: The level on the D-07 scale.
+        index: 1
+        annotations:
+          displayName: Classification level
+          description: Classification level (D-07)
+        constraints:
+          required: true
+        enumValues:
+        - name: PUBLIC
+          index: 1
+        - name: INTERNAL
+          index: 2
+        - name: CONFIDENTIAL
+          index: 3
+        - name: RESTRICTED
+          index: 4
       - name: is_sensitive
-        index: 2
         type: bool
-        required: true
-        display_name: Is sensitive
-        description: True when the level is CONFIDENTIAL or RESTRICTED. Computed from the level.
+        index: 2
+        annotations:
+          displayName: Is sensitive
+          description: True when the level is CONFIDENTIAL or RESTRICTED
+        constraints:
+          required: true
       - name: source
-        index: 3
         type: enum
-        required: true
-        values: [PENDING_PROFILE, SDP_PROFILE, INFOTYPE_RULE, STEWARD_RAISE, STEWARD_OVERRIDE]
-        display_name: Source
-        description: Where the level came from. On the table aspect, the source of the level that won.
+        index: 3
+        annotations:
+          displayName: Source
+          description: Source of the level
+        constraints:
+          required: true
+        enumValues:
+        - name: PENDING_PROFILE
+          index: 1
+        - name: SDP_PROFILE
+          index: 2
+        - name: INFOTYPE_RULE
+          index: 3
+        - name: STEWARD_RAISE
+          index: 4
+        - name: STEWARD_OVERRIDE
+          index: 5
       - name: rule_version
-        index: 4
         type: int
-        required: true
-        display_name: Rule version
-        description: Version of the infoType rule table loaded when the level was computed.
+        index: 4
+        annotations:
+          displayName: Rule version
+          description: Version of the infoType rule table
+        constraints:
+          required: true
       - name: set_at
+        type: datetime
         index: 5
-        type: datetime
-        required: true
-        display_name: Set at
-        description: When the level was set.
+        annotations:
+          displayName: Set at
+          description: When the level was set
+        constraints:
+          required: true
       - name: set_by
+        type: string
         index: 6
-        type: string
-        required: true
-        display_name: Set by
-        description: Classifier module version, or the steward's email address for a raise or override.
+        annotations:
+          displayName: Set by
+          description: Module version or steward email
+        constraints:
+          required: true
       - name: override_expires_at
-        index: 7
         type: datetime
-        required: false
-        display_name: Override expires at
-        description: Approved expiry of a steward override. Present only when source is STEWARD_OVERRIDE.
-    trailing_fields:
+        index: 7
+        annotations:
+          displayName: Override expires at
+          description: Approved expiry of a steward override
+      - name: evaluation
+        type: record
+        index: 8
+        annotations:
+          displayName: Evaluation
+          description: The authoritative evaluation record (D-01)
+        constraints:
+          required: true
+        recordFields:
+        - name: evaluator_version
+          type: string
+          index: 1
+          annotations:
+            displayName: Evaluator version
+            description: Module name and version, for example c12-rollup@1.3.0
+          constraints:
+            required: true
+        - name: evaluated_at
+          type: datetime
+          index: 2
+          annotations:
+            displayName: Evaluated at
+            description: When the writer computed the values
+          constraints:
+            required: true
+        - name: source_ref
+          type: string
+          index: 3
+          annotations:
+            displayName: Source ref
+            description: Resource name of the evidence
+          constraints:
+            required: true
+      - name: narrative
+        type: record
+        index: 9
+        annotations:
+          displayName: Narrative
+          description: Advisory record; reserved, no component writes it (P5-2)
+        recordFields:
+        - name: summary
+          type: string
+          index: 1
+          annotations:
+            displayName: Summary
+            description: ''
+        - name: model
+          type: string
+          index: 2
+          annotations:
+            displayName: Model
+            description: ''
+        - name: prompt_version
+          type: string
+          index: 3
+          annotations:
+            displayName: Prompt version
+            description: ''
+        - name: authoritative
+          type: bool
+          index: 4
+          annotations:
+            displayName: Authoritative
+            description: ''
+      - name: schema_version
+        type: int
+        index: 10
+        annotations:
+          displayName: Schema version
+          description: Version of the template the payload was written against
+        constraints:
+          required: true
       - name: schema_fingerprint
+        type: string
         index: 11
-        type: string
-        required: false
-        display_name: Schema fingerprint
-        description: Lower-case hexadecimal SHA-256 of the table's column paths and types. Table-level aspect only.
-
+        annotations:
+          displayName: Schema fingerprint
+          description: SHA-256 of the table's column paths and types
   cdmc-provisioning-point:
-    display_name: CDMC provisioning point
-    description: Whether a BigQuery table is a provisioning point (C3). Writer is the C3 module of the control evaluator.
-    shared_index: 2
-    fields:
+    metadataTemplate:
+      name: cdmc-provisioning-point
+      type: record
+      recordFields:
       - name: is_provisioning_point
-        index: 1
         type: bool
-        required: true
-        display_name: Is provisioning point
-        description: True when the table is an asset of a data product and sits in the analytics subdomain.
-
+        index: 1
+        annotations:
+          displayName: Is provisioning point
+          description: Asset of a data product in the analytics subdomain
+        constraints:
+          required: true
+      - name: evaluation
+        type: record
+        index: 2
+        annotations:
+          displayName: Evaluation
+          description: The authoritative evaluation record (D-01)
+        constraints:
+          required: true
+        recordFields:
+        - name: evaluator_version
+          type: string
+          index: 1
+          annotations:
+            displayName: Evaluator version
+            description: Module name and version, for example c12-rollup@1.3.0
+          constraints:
+            required: true
+        - name: evaluated_at
+          type: datetime
+          index: 2
+          annotations:
+            displayName: Evaluated at
+            description: When the writer computed the values
+          constraints:
+            required: true
+        - name: source_ref
+          type: string
+          index: 3
+          annotations:
+            displayName: Source ref
+            description: Resource name of the evidence
+          constraints:
+            required: true
+      - name: narrative
+        type: record
+        index: 3
+        annotations:
+          displayName: Narrative
+          description: Advisory record; reserved, no component writes it (P5-2)
+        recordFields:
+        - name: summary
+          type: string
+          index: 1
+          annotations:
+            displayName: Summary
+            description: ''
+        - name: model
+          type: string
+          index: 2
+          annotations:
+            displayName: Model
+            description: ''
+        - name: prompt_version
+          type: string
+          index: 3
+          annotations:
+            displayName: Prompt version
+            description: ''
+        - name: authoritative
+          type: bool
+          index: 4
+          annotations:
+            displayName: Authoritative
+            description: ''
+      - name: schema_version
+        type: int
+        index: 4
+        annotations:
+          displayName: Schema version
+          description: Version of the template the payload was written against
+        constraints:
+          required: true
   cdmc-lineage-evidence:
-    display_name: CDMC lineage evidence
-    description: Run-time and design-time ultimate sources of a BigQuery table (C14). Writer is the C14 module of the control evaluator.
-    shared_index: 4
-    fields:
+    metadataTemplate:
+      name: cdmc-lineage-evidence
+      type: record
+      recordFields:
       - name: run_time_ultimate_source
-        index: 1
         type: array
-        item_name: source_fqn
-        item_type: string
-        required: false
-        display_name: Run-time ultimate sources
-        description: Origins resolved from run-time lineage, as Data Lineage fully qualified names.
+        index: 1
+        annotations:
+          displayName: Run time ultimate source
+          description: Origins resolved from run-time lineage (FQNs)
+        arrayItems:
+          name: source_fqn
+          type: string
       - name: design_time_ultimate_source
-        index: 2
         type: array
-        item_name: source_fqn
-        item_type: string
-        required: false
-        display_name: Design-time ultimate sources
-        description: Origins declared in the domain's lineage manifest, in the same form.
+        index: 2
+        annotations:
+          displayName: Design time ultimate source
+          description: Origins declared in the domain's lineage manifest
+        arrayItems:
+          name: source_fqn
+          type: string
       - name: upstream_data_products
-        index: 3
         type: array
-        item_name: data_product
-        item_type: string
-        required: false
-        display_name: Upstream data products
-        description: Resource names of the data products crossed on the way to the ultimate sources (C3 evidence).
-
-  cdmc-data-product-contract:
-    display_name: CDMC data product contract
-    description: Owner inputs of a data product contract. Writer is the contract writer of the control evaluator.
-    shared_index: 3
-    fields:
-      - name: aggregate_dq_threshold
-        index: 1
-        type: double
-        required: false
-        display_name: Aggregate DQ threshold
-        description: Product quality threshold, a percentage from 0 to 100.
-      - name: steward
-        index: 2
-        type: string
-        required: false
-        display_name: Steward
-        description: Email address of the product's steward Google group.
-
-  cdmc-data-product-quality:
-    display_name: CDMC data product quality
-    description: Pooled quality score, status and freshness of a data product (C12). Writer is the C12 module of the control evaluator.
-    shared_index: 4
-    fields:
-      - name: aggregate_dq_score
-        index: 1
-        type: double
-        required: false
-        display_name: Aggregate DQ score
-        description: Pooled rule pass rate across the product's scanned tables, 0 to 100. Absent when NOT_EVALUATED.
-      - name: aggregate_dq_status
-        index: 2
-        type: enum
-        required: true
-        values: [COMPLIANT, NON_COMPLIANT, NOT_EVALUATED]
-        display_name: Aggregate DQ status
-        description: Product quality status against the contract threshold.
-      - name: freshness_status
         index: 3
+        annotations:
+          displayName: Upstream data products
+          description: Data products crossed on the way to the ultimate sources
+        arrayItems:
+          name: data_product
+          type: string
+      - name: evaluation
+        type: record
+        index: 4
+        annotations:
+          displayName: Evaluation
+          description: The authoritative evaluation record (D-01)
+        constraints:
+          required: true
+        recordFields:
+        - name: evaluator_version
+          type: string
+          index: 1
+          annotations:
+            displayName: Evaluator version
+            description: Module name and version, for example c12-rollup@1.3.0
+          constraints:
+            required: true
+        - name: evaluated_at
+          type: datetime
+          index: 2
+          annotations:
+            displayName: Evaluated at
+            description: When the writer computed the values
+          constraints:
+            required: true
+        - name: source_ref
+          type: string
+          index: 3
+          annotations:
+            displayName: Source ref
+            description: Resource name of the evidence
+          constraints:
+            required: true
+      - name: narrative
+        type: record
+        index: 5
+        annotations:
+          displayName: Narrative
+          description: Advisory record; reserved, no component writes it (P5-2)
+        recordFields:
+        - name: summary
+          type: string
+          index: 1
+          annotations:
+            displayName: Summary
+            description: ''
+        - name: model
+          type: string
+          index: 2
+          annotations:
+            displayName: Model
+            description: ''
+        - name: prompt_version
+          type: string
+          index: 3
+          annotations:
+            displayName: Prompt version
+            description: ''
+        - name: authoritative
+          type: bool
+          index: 4
+          annotations:
+            displayName: Authoritative
+            description: ''
+      - name: schema_version
+        type: int
+        index: 6
+        annotations:
+          displayName: Schema version
+          description: Version of the template the payload was written against
+        constraints:
+          required: true
+  cdmc-data-product-contract:
+    metadataTemplate:
+      name: cdmc-data-product-contract
+      type: record
+      recordFields:
+      - name: aggregate_dq_threshold
+        type: double
+        index: 1
+        annotations:
+          displayName: Aggregate dq threshold
+          description: Product quality threshold, 0 to 100
+      - name: steward
+        type: string
+        index: 2
+        annotations:
+          displayName: Steward
+          description: Email address of the steward Google group
+      - name: evaluation
+        type: record
+        index: 3
+        annotations:
+          displayName: Evaluation
+          description: The authoritative evaluation record (D-01)
+        constraints:
+          required: true
+        recordFields:
+        - name: evaluator_version
+          type: string
+          index: 1
+          annotations:
+            displayName: Evaluator version
+            description: Module name and version, for example c12-rollup@1.3.0
+          constraints:
+            required: true
+        - name: evaluated_at
+          type: datetime
+          index: 2
+          annotations:
+            displayName: Evaluated at
+            description: When the writer computed the values
+          constraints:
+            required: true
+        - name: source_ref
+          type: string
+          index: 3
+          annotations:
+            displayName: Source ref
+            description: Resource name of the evidence
+          constraints:
+            required: true
+      - name: narrative
+        type: record
+        index: 4
+        annotations:
+          displayName: Narrative
+          description: Advisory record; reserved, no component writes it (P5-2)
+        recordFields:
+        - name: summary
+          type: string
+          index: 1
+          annotations:
+            displayName: Summary
+            description: ''
+        - name: model
+          type: string
+          index: 2
+          annotations:
+            displayName: Model
+            description: ''
+        - name: prompt_version
+          type: string
+          index: 3
+          annotations:
+            displayName: Prompt version
+            description: ''
+        - name: authoritative
+          type: bool
+          index: 4
+          annotations:
+            displayName: Authoritative
+            description: ''
+      - name: schema_version
+        type: int
+        index: 5
+        annotations:
+          displayName: Schema version
+          description: Version of the template the payload was written against
+        constraints:
+          required: true
+  cdmc-data-product-quality:
+    metadataTemplate:
+      name: cdmc-data-product-quality
+      type: record
+      recordFields:
+      - name: aggregate_dq_score
+        type: double
+        index: 1
+        annotations:
+          displayName: Aggregate dq score
+          description: Pooled rule pass rate, 0 to 100
+      - name: aggregate_dq_status
         type: enum
-        required: false
-        values: [ON_TIME, LATE]
-        display_name: Freshness status
-        description: Whether the product met its refresh-cadence commitment. Absent without refresh-cadence.
+        index: 2
+        annotations:
+          displayName: Aggregate dq status
+          description: Product quality status (ref arch 9.5)
+        constraints:
+          required: true
+        enumValues:
+        - name: COMPLIANT
+          index: 1
+        - name: NON_COMPLIANT
+          index: 2
+        - name: NOT_EVALUATED
+          index: 3
+      - name: freshness_status
+        type: enum
+        index: 3
+        annotations:
+          displayName: Freshness status
+          description: Freshness against refresh-cadence
+        enumValues:
+        - name: ON_TIME
+          index: 1
+        - name: LATE
+          index: 2
+      - name: evaluation
+        type: record
+        index: 4
+        annotations:
+          displayName: Evaluation
+          description: The authoritative evaluation record (D-01)
+        constraints:
+          required: true
+        recordFields:
+        - name: evaluator_version
+          type: string
+          index: 1
+          annotations:
+            displayName: Evaluator version
+            description: Module name and version, for example c12-rollup@1.3.0
+          constraints:
+            required: true
+        - name: evaluated_at
+          type: datetime
+          index: 2
+          annotations:
+            displayName: Evaluated at
+            description: When the writer computed the values
+          constraints:
+            required: true
+        - name: source_ref
+          type: string
+          index: 3
+          annotations:
+            displayName: Source ref
+            description: Resource name of the evidence
+          constraints:
+            required: true
+      - name: narrative
+        type: record
+        index: 5
+        annotations:
+          displayName: Narrative
+          description: Advisory record; reserved, no component writes it (P5-2)
+        recordFields:
+        - name: summary
+          type: string
+          index: 1
+          annotations:
+            displayName: Summary
+            description: ''
+        - name: model
+          type: string
+          index: 2
+          annotations:
+            displayName: Model
+            description: ''
+        - name: prompt_version
+          type: string
+          index: 3
+          annotations:
+            displayName: Prompt version
+            description: ''
+        - name: authoritative
+          type: bool
+          index: 4
+          annotations:
+            displayName: Authoritative
+            description: ''
+      - name: schema_version
+        type: int
+        index: 6
+        annotations:
+          displayName: Schema version
+          description: Version of the template the payload was written against
+        constraints:
+          required: true

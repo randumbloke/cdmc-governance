@@ -14,7 +14,7 @@ resource "google_pubsub_subscription" "feed_evaluator" {
   message_retention_duration = var.push_delivery.retention
 
   push_config {
-    push_endpoint = "${google_cloud_run_v2_service.evaluator.uri}/events/feed"
+    push_endpoint = "${google_cloud_run_v2_service.evaluator.uri}/events/kc"
     oidc_token {
       service_account_email = local.evaluator_sa
       audience              = google_cloud_run_v2_service.evaluator.uri
@@ -127,7 +127,7 @@ resource "google_eventarc_trigger" "state_objects" {
     cloud_run_service {
       service = google_cloud_run_v2_service.evaluator.name
       region  = local.home_region
-      path    = "/events/state-object"
+      path    = "/events/state"
     }
   }
 

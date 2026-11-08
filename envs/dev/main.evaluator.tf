@@ -12,26 +12,23 @@ locals {
 
   evaluator_labels = merge(local.labels_file.cloud_run, { "dda-component" = "evaluator" })
 
+  # Names as read by kc-control-plane cdmc_common.config.Settings.from_env.
   evaluator_env = {
     DDA_ENV               = var.env
     HUB_PROJECT_ID        = local.hub_project_id
-    HOME_REGION           = local.home_region
-    REGIONS               = jsonencode(local.regions)
-    STATE_BUCKET          = local.state_bucket
-    CDMC_REPORT_DATASET   = google_bigquery_dataset.cdmc_report.dataset_id
-    DQ_RESULTS_DATASETS   = jsonencode({ for r, d in google_bigquery_dataset.dq_results : r => d.dataset_id })
-    DATA_PROJECTS         = jsonencode(keys(local.data_projects))
-    ASPECT_TYPES          = jsonencode(local.governance_tier.aspect_types)
+    REGION                = local.home_region
+    CICD_PROJECT_ID       = local.cicd_project_id
+    HUB_STATE_BUCKET      = local.state_bucket
     FINDINGS_TOPIC        = local.topic["findings"]
-    NOTIFICATIONS_TOPIC   = local.topic["notifications"]
+    DQ_RESULTS_TABLE      = "${local.hub_project_id}.${google_bigquery_dataset.dq_results[local.home_region].dataset_id}.scan_results"
     ROLLUP_QUEUE          = local.rollup_queue
-    ROLLUP_TARGET_URL     = local.evaluator_url
-    ROLLUP_WINDOW_MINUTES = tostring(var.rollup_window_minutes)
-    EVALUATOR_SA          = local.evaluator_sa
+    ROLLUP_HANDLER_URL    = "${local.evaluator_url}/tasks/rollup"
+    ROLLUP_INVOKER_SA     = local.evaluator_sa
+    ROLLUP_WINDOW_SECONDS = tostring(var.rollup_window_minutes * 60)
+    DATA_PROJECTS         = join(",", keys(local.data_projects))
+    SINGLE_DEPLOYER       = tostring(local.single_deployer)
+    SCHEDULER_TIME_ZONE   = var.scheduler_time_zone
     EVALUATOR_MODULES     = join(",", var.components.evaluator_modules)
-    # Uploader check on products/ and lineage/ (design §2.3.2): the accepted uploader per domain.
-    DOMAIN_PIPELINES = jsonencode({ for b, sa in local.domain_pipeline : local.domain_id[b] => sa })
-    SINGLE_DEPLOYER  = tostring(local.single_deployer)
   }
 }
 
@@ -61,7 +58,7 @@ resource "google_cloud_run_v2_service" "evaluator" {
       image = local.images["evaluator"]
 
       dynamic "env" {
-        for_each = merge(local.evaluator_env, { EVALUATOR_MODE = "service" })
+        for_each = local.evaluator_env
         content {
           name  = env.key
           value = env.value
@@ -98,9 +95,12 @@ resource "google_cloud_run_v2_job" "evaluator_sweep" {
 
       containers {
         image = local.images["evaluator"]
+        # Same image as the service; the sweep entry point is the evaluator-sweep script of
+        # kc-control-plane's pyproject. VERIFY IN BUILD (no VA ID): the image puts it on PATH.
+        command = ["evaluator-sweep"]
 
         dynamic "env" {
-          for_each = merge(local.evaluator_env, { EVALUATOR_MODE = "sweep" })
+          for_each = local.evaluator_env
           content {
             name  = env.key
             value = env.value

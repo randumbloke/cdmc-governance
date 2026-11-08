@@ -78,7 +78,8 @@ def test_bad_infotype_level_is_refused(repo: Path):
 
 def test_reused_aspect_index_is_refused(repo: Path):
     p = repo / "aspect_types" / "cdmc_aspect_types.yaml"
-    p.write_text(p.read_text().replace("shared_index: 2\n", "shared_index: 1\n", 1))
+    text = p.read_text()
+    p.write_text(text.replace("index: 2\n", "index: 1\n", 1))
     assert ci_checks.check_aspect_types(repo)
 
 
