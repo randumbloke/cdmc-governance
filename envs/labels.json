@@ -1,0 +1,16 @@
+{
+  "_comment": "Labels by resource type (design §1.6; P1-7). Read by every root module of this repository. Hub resources carry dda-domain=shared; dda-env goes only on core data and analytics projects and scans, so no hub resource carries it. Cloud Run services and jobs add dda-component per component.",
+  "hub_dataset": {
+    "dda-domain": "shared"
+  },
+  "hub_bucket": {
+    "dda-domain": "shared"
+  },
+  "cloud_run": {
+    "dda-domain": "shared"
+  },
+  "data_domain": {},
+  "catalog": {
+    "dda-domain": "shared"
+  }
+}

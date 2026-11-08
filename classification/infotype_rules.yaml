@@ -1,0 +1,15 @@
+# InfoType rule table (design §5.3.3; ADR-010 §3.2, CL6).
+#
+# A rule applies only when a column's single columnInfoType matches `info_type`; a match in
+# otherMatches never lowers a level (§5.3.2 step 2). `level` is the level the classifier sets for
+# that infoType, which may be lower than the SDP sensitivity mapping. Raise `version` on every
+# change; the classifier records it as `rule_version` on every level it sets.
+#
+# Production-tier changes need two approvals from dda-governance-admins other than the author
+# (merge gate, decision P6-16). Phase 1 has no classifier; the table is published so that it is
+# in place, at a known version, when phase 2 switches the classifier on.
+version: 1
+rules:
+  - info_type: PERSON_NAME
+    level: INTERNAL
+    rationale: Names alone are not confidential in this organisation's policy.

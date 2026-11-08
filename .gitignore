@@ -1,0 +1,8 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.auto.tfvars
+scratch_schema/
+.local/
+envs/dev/override_local.tf

@@ -1,0 +1,38 @@
+# Governance glossary of each hub (design §4.2.1; decision P4-2).
+#
+# The four categories hold the term IDs that access requests use as purpose labels. Term IDs are
+# lower-case kebab-case so they are valid label values. Applied by tiers/<tier>/main.glossary.tf.
+# Phase 1 has no access request gate; the glossary is created now so that the categories exist
+# when the gate is switched on.
+glossary_id: dda-governance
+display_name: DDA governance glossary
+description: Approved purposes, data categories, legal entities and countries used as access request labels.
+categories:
+  approved-purposes:
+    display_name: Approved purposes
+    description: Purposes for which access to a sensitive data product may be requested (label purpose_code).
+    terms:
+      account-servicing:
+        display_name: Account servicing
+        description: Servicing existing customer accounts.
+  data-categories:
+    display_name: Data categories
+    description: Types of data a consumer may request (label data_category).
+    terms:
+      customer-contact:
+        display_name: Customer contact
+        description: Customer names, email addresses, telephone numbers and postal addresses.
+  legal-entities:
+    display_name: Legal entities
+    description: Legal entities that may receive data (label legal_entity).
+    terms:
+      au01:
+        display_name: AU01
+        description: The Australian operating entity.
+  countries:
+    display_name: Countries
+    description: Countries, as ISO 3166-1 alpha-2 codes in lower case (label country).
+    terms:
+      au:
+        display_name: Australia
+        description: Australia.
