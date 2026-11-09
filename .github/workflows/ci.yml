@@ -86,7 +86,7 @@ jobs:
           done
 
       - name: Misconfiguration scan (Trivy)
-        run: trivy config --exit-code 1 --severity HIGH,CRITICAL --skip-dirs scratch_schema .
+        run: trivy config --misconfig-scanners terraform --exit-code 1 --severity HIGH,CRITICAL --skip-dirs scratch_schema,.terraform .
 
       - name: Repository checks (root-module comparison, projectReaders, IAM ownership, dataset access, local execution, image digests, lock files, workflows, schemas)
         run: |

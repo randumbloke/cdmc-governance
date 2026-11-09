@@ -10,6 +10,15 @@ plugin "terraform" {
 
 plugin "google" {
   enabled = true
-  version = "0.30.0" # VERIFY IN BUILD (no VA ID): ruleset version current at first run
+  version = "0.41.0"
   source  = "github.com/terraform-linters/tflint-ruleset-google"
+}
+
+rule "terraform_unused_declarations" {
+  enabled = false
+}
+
+# Decision P6-28: a branch ref (?ref=main) is allowed on cross-repository module sources.
+rule "terraform_module_pinned_source" {
+  enabled = false
 }

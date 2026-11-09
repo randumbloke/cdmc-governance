@@ -16,14 +16,11 @@ locals {
   platform_tier = jsondecode(data.google_storage_bucket_object_content.platform_tier.content)
   labels_file   = jsondecode(file("${path.module}/../../envs/labels.json"))
 
-  hub_project_id     = local.platform_tier.hub_project_id
-  hub_project_number = local.platform_tier.hub_project_number
-  regions            = local.estate.regions
-  home_region        = local.estate.regions[0]
-  org_id             = local.estate.organization_id
-  group_domain       = local.estate.group_domain
-  cicd_project_id    = coalesce(local.estate.cicd_project_id, local.hub_project_id)
-  single_deployer    = local.estate.single_deployer
+  hub_project_id  = local.platform_tier.hub_project_id
+  regions         = local.estate.regions
+  home_region     = local.estate.regions[0]
+  cicd_project_id = coalesce(local.estate.cicd_project_id, local.hub_project_id)
+  single_deployer = local.estate.single_deployer
 
   # Environments served by this tier's hub (design §2.1, §6.2).
   tier_of_env = { dev = "nonprod", test = "nonprod", uat = "prod", prod = "prod" }
