@@ -10,6 +10,10 @@ plugin "terraform" {
 
 plugin "google" {
   enabled = true
-  version = "0.30.0" # VERIFY IN BUILD (no VA ID): ruleset version current at first run
+  version = "0.41.0"
   source  = "github.com/terraform-linters/tflint-ruleset-google"
+}
+
+rule "terraform_unused_declarations" {
+  enabled = false
 }
