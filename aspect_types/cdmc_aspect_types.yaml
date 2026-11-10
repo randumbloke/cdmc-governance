@@ -132,25 +132,21 @@ aspect_types:
           index: 1
           annotations:
             displayName: Summary
-            description: ''
         - name: model
           type: string
           index: 2
           annotations:
             displayName: Model
-            description: ''
         - name: prompt_version
           type: string
           index: 3
           annotations:
             displayName: Prompt version
-            description: ''
         - name: authoritative
           type: bool
           index: 4
           annotations:
             displayName: Authoritative
-            description: ''
       - name: schema_version
         type: int
         index: 10
@@ -223,25 +219,21 @@ aspect_types:
           index: 1
           annotations:
             displayName: Summary
-            description: ''
         - name: model
           type: string
           index: 2
           annotations:
             displayName: Model
-            description: ''
         - name: prompt_version
           type: string
           index: 3
           annotations:
             displayName: Prompt version
-            description: ''
         - name: authoritative
           type: bool
           index: 4
           annotations:
             displayName: Authoritative
-            description: ''
       - name: schema_version
         type: int
         index: 4
@@ -327,25 +319,21 @@ aspect_types:
           index: 1
           annotations:
             displayName: Summary
-            description: ''
         - name: model
           type: string
           index: 2
           annotations:
             displayName: Model
-            description: ''
         - name: prompt_version
           type: string
           index: 3
           annotations:
             displayName: Prompt version
-            description: ''
         - name: authoritative
           type: bool
           index: 4
           annotations:
             displayName: Authoritative
-            description: ''
       - name: schema_version
         type: int
         index: 6
@@ -416,25 +404,21 @@ aspect_types:
           index: 1
           annotations:
             displayName: Summary
-            description: ''
         - name: model
           type: string
           index: 2
           annotations:
             displayName: Model
-            description: ''
         - name: prompt_version
           type: string
           index: 3
           annotations:
             displayName: Prompt version
-            description: ''
         - name: authoritative
           type: bool
           index: 4
           annotations:
             displayName: Authoritative
-            description: ''
       - name: schema_version
         type: int
         index: 5
@@ -525,25 +509,21 @@ aspect_types:
           index: 1
           annotations:
             displayName: Summary
-            description: ''
         - name: model
           type: string
           index: 2
           annotations:
             displayName: Model
-            description: ''
         - name: prompt_version
           type: string
           index: 3
           annotations:
             displayName: Prompt version
-            description: ''
         - name: authoritative
           type: bool
           index: 4
           annotations:
             displayName: Authoritative
-            description: ''
       - name: schema_version
         type: int
         index: 6
