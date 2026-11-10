@@ -10,8 +10,10 @@
 
 locals {
   # Data projects hold their data in the home region (single-region estate, design §2.1); the
-  # template and export dataset of that region are used.
-  discovery_region = local.home_region
+  # template and export dataset of that region are used. SDP DiscoveryConfig requires a
+  # non-global location matching the template region (VA-39, VA-59).
+  discovery_region   = local.home_region
+  discovery_location = coalesce(var.discovery_location, local.discovery_region)
 
   sdp_events = ["NEW_PROFILE", "CHANGED_PROFILE", "SCORE_INCREASED"]
 }
@@ -19,8 +21,8 @@ locals {
 resource "google_data_loss_prevention_discovery_config" "project" {
   for_each = local.data_projects
 
-  parent       = "projects/${each.key}/locations/${var.discovery_location}"
-  location     = var.discovery_location
+  parent       = "projects/${each.key}/locations/${local.discovery_location}"
+  location     = local.discovery_location
   display_name = "dda-discovery-${var.env}"
   status       = "RUNNING"
 
