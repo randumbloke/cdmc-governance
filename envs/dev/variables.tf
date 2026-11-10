@@ -124,9 +124,9 @@ variable "findings_detail_type" {
 }
 
 variable "discovery_location" {
-  description = "Location of each data project's discovery configuration (design §2.10.1 table: global). VERIFY IN BUILD (VA-39, VA-59)."
+  description = "Location of each data project's discovery configuration; null = the home region (SDP DiscoveryConfig requires a non-global regional location, verified live 2026-11-10, VA-39, VA-59)."
   type        = string
-  default     = "global"
+  default     = null
 }
 
 variable "metadata_feed_location" {
