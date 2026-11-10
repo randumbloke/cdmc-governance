@@ -9,8 +9,10 @@
 
 locals {
   feed_location = coalesce(var.metadata_feed_location, local.home_region)
-  system_aspect = "projects/dataplex-types/locations/global/aspectTypes"
-  custom_aspect = "projects/${local.hub_project_id}/locations/global/aspectTypes"
+  # The API stores aspect type names with project numbers, so the config uses that form or every
+  # plan shows a diff (AT-06). 655216118709 is the project number of dataplex-types.
+  system_aspect = "projects/655216118709/locations/global/aspectTypes"
+  custom_aspect = "projects/${local.hub_project_number}/locations/global/aspectTypes"
 
   feed_scope_projects = [for p in sort(keys(local.data_projects)) : "projects/${local.data_projects[p].number}"]
 
@@ -19,10 +21,7 @@ locals {
       "feed-evaluator" = {
         topic = "kc-evaluator"
         aspect_types = [
-          try(
-            local.governance_tier.aspect_types["cdmc-classification"],
-            "${local.custom_aspect}/cdmc-classification",
-          ),
+          "${local.custom_aspect}/cdmc-classification",
           "${local.system_aspect}/data-quality-scorecard",
           "${local.system_aspect}/contacts",
           "${local.system_aspect}/data-product",
