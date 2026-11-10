@@ -111,6 +111,15 @@ resource "google_bigquery_dataset_access" "cdmc_report_evaluator" {
   user_by_email = local.evaluator_sa
 }
 
+# The plan account refreshes the cdmc_report tables Terraform declares. roles/bigquery.metadataViewer
+# reads schemas and table metadata, not table data (OD-10; design §6.7.2).
+resource "google_bigquery_dataset_access" "cdmc_report_plan" {
+  project    = local.hub_project_id
+  dataset_id = google_bigquery_dataset.cdmc_report.dataset_id
+  role       = "roles/bigquery.metadataViewer"
+  iam_member = "serviceAccount:${local.governance_plan}"
+}
+
 # The hub Pub/Sub agent writes the findings BigQuery subscription (design §2.4.5).
 resource "google_bigquery_dataset_access" "cdmc_report_pubsub_agent" {
   project       = local.hub_project_id

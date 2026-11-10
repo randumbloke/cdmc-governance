@@ -47,6 +47,13 @@ locals {
     ? local.estate.deployer_service_accounts.apply
     : "tf-governance-${var.tier}@${local.cicd_project_id}.iam.gserviceaccount.com"
   )
+  # Read-only plan account (design §6.7.2). It needs metadata read on hub datasets whose tables
+  # Terraform declares, because those datasets carry no projectReaders entry (OD-10).
+  governance_plan = (
+    local.single_deployer
+    ? local.estate.deployer_service_accounts.plan
+    : "tf-governance-${var.tier}-plan@${local.cicd_project_id}.iam.gserviceaccount.com"
+  )
   domain_pipeline = {
     for b in keys(var.domains) : b => (
       local.single_deployer
