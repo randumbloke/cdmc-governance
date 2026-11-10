@@ -14,6 +14,9 @@ locals {
     # Data project ID -> discovery configuration name. A domain core stack refuses a dataset in
     # a project not listed here (design §6.14.1).
     discovery_configs = { for p, c in google_data_loss_prevention_discovery_config.project : p => c.name }
+    metadata_feeds = {
+      for f, _ in local.feeds : f => "projects/${local.hub_project_id}/locations/${local.feed_location}/metadataFeeds/${f}-${var.env}"
+    }
     service_urls = {
       evaluator = google_cloud_run_v2_service.evaluator.uri
     }
@@ -26,6 +29,8 @@ resource "google_storage_bucket_object" "outputs" {
   name         = "outputs/cdmc-governance/${var.env}/outputs.json"
   content      = jsonencode(local.published)
   content_type = "application/json"
+
+  depends_on = [google_dataplex_metadata_feed.feed]
 }
 
 output "published" {

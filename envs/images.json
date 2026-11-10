@@ -1,5 +1,5 @@
 {
   "_comment": "Control plane images by digest (design §6.10). Set by a pull request from the digests that the kc-control-plane image build records in outputs/kc-control-plane/images.json (images.<name>.repository@digest). VERIFY IN BUILD (no VA ID): the digests below are placeholders until the first kc-control-plane image build (task 7.3); CI refuses a reference that is not @sha256:.",
-  "evaluator": "australia-southeast1-docker.pkg.dev/pltfrm-ngnrng/dda-control-plane/evaluator@sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "evaluator-sweep": "australia-southeast1-docker.pkg.dev/pltfrm-ngnrng/dda-control-plane/evaluator-sweep@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  "evaluator": "australia-southeast1-docker.pkg.dev/pltfrm-ngnrng/dda-control-plane/evaluator@sha256:f162473161dc8860188b2ced99e818882e158d4d5d42759587ab9a221005b5a6",
+  "evaluator-sweep": "australia-southeast1-docker.pkg.dev/pltfrm-ngnrng/dda-control-plane/evaluator@sha256:f162473161dc8860188b2ced99e818882e158d4d5d42759587ab9a221005b5a6"
 }

@@ -129,6 +129,12 @@ variable "discovery_location" {
   default     = "global"
 }
 
+variable "metadata_feed_location" {
+  description = "Location of the metadata feeds; null = the home region (design §6.16.3, until VA-59 says otherwise)."
+  type        = string
+  default     = null
+}
+
 variable "compliance_reviewers_group" {
   description = "Group granted read on cdmc_report (design §1.5.1), for example dda-compliance-reviewers@<group domain>. Empty: no grant (the group is not in the phase 1 asks)."
   type        = string
