@@ -94,9 +94,8 @@ resource "google_cloud_run_v2_job" "evaluator_sweep" {
       max_retries     = 1
 
       containers {
-        # kc-control-plane builds a separate job image (build/Dockerfile target `job`,
-        # CMD evaluator-sweep).
-        image = local.images["evaluator-sweep"]
+        image   = local.images["evaluator-sweep"]
+        command = ["evaluator-sweep"]
 
         dynamic "env" {
           for_each = local.evaluator_env

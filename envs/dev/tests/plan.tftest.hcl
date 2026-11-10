@@ -42,7 +42,7 @@ override_data {
 override_data {
   target = data.google_storage_bucket_object_content.platform_env
   values = {
-    content = "{\"env\":\"dev\",\"folders\":{},\"projects\":{\"core\":{\"project_id\":\"kcdda-core-dwh-dev\",\"number\":\"222222222222\",\"service_agents\":{\"dataplex\":\"service-222222222222@gcp-sa-dataplex.iam.gserviceaccount.com\",\"dlp\":\"service-222222222222@dlp-api.iam.gserviceaccount.com\"}},\"customer\":{\"project_id\":\"kcdda-customer-analytics-dev\",\"number\":\"333333333333\",\"service_agents\":{}},\"accounts\":{\"project_id\":\"kcdda-accounts-analytics-dev\",\"number\":\"444444444444\",\"service_agents\":{}}},\"landing_buckets\":{},\"topics\":{\"kc-evaluator\":\"projects/kcdda-dgov-hub-nonprod/topics/kc-evaluator-dev\",\"kc-evaluator-dlq\":\"projects/kcdda-dgov-hub-nonprod/topics/kc-evaluator-dev-dlq\",\"findings\":\"projects/kcdda-dgov-hub-nonprod/topics/findings-dev\",\"notifications\":\"projects/kcdda-dgov-hub-nonprod/topics/notifications-dev\"},\"metadata_feeds\":{},\"domain_service_accounts\":{\"customer\":{\"ingest\":\"customer-ingest-dev@kcdda-customer-analytics-dev.iam.gserviceaccount.com\",\"analytics\":\"customer-analytics-dev@kcdda-customer-analytics-dev.iam.gserviceaccount.com\"},\"accounts\":{\"ingest\":\"accounts-ingest-dev@kcdda-accounts-analytics-dev.iam.gserviceaccount.com\",\"analytics\":\"accounts-analytics-dev@kcdda-accounts-analytics-dev.iam.gserviceaccount.com\"}}}"
+    content = "{\"env\":\"dev\",\"folders\":{},\"projects\":{\"core\":{\"project_id\":\"kcdda-core-dwh-dev\",\"number\":\"222222222222\",\"service_agents\":{\"dataplex\":\"service-222222222222@gcp-sa-dataplex.iam.gserviceaccount.com\",\"dlp\":\"service-222222222222@dlp-api.iam.gserviceaccount.com\"}},\"customer\":{\"project_id\":\"kcdda-customer-analytics-dev\",\"number\":\"333333333333\",\"service_agents\":{}},\"accounts\":{\"project_id\":\"kcdda-accounts-analytics-dev\",\"number\":\"444444444444\",\"service_agents\":{}}},\"landing_buckets\":{},\"topics\":{\"kc-evaluator\":\"projects/kcdda-dgov-hub-nonprod/topics/kc-evaluator-dev\",\"kc-evaluator-dlq\":\"projects/kcdda-dgov-hub-nonprod/topics/kc-evaluator-dev-dlq\",\"findings\":\"projects/kcdda-dgov-hub-nonprod/topics/findings-dev\",\"notifications\":\"projects/kcdda-dgov-hub-nonprod/topics/notifications-dev\"},\"domain_service_accounts\":{\"customer\":{\"ingest\":\"customer-ingest-dev@kcdda-customer-analytics-dev.iam.gserviceaccount.com\",\"analytics\":\"customer-analytics-dev@kcdda-customer-analytics-dev.iam.gserviceaccount.com\"},\"accounts\":{\"ingest\":\"accounts-ingest-dev@kcdda-accounts-analytics-dev.iam.gserviceaccount.com\",\"analytics\":\"accounts-analytics-dev@kcdda-accounts-analytics-dev.iam.gserviceaccount.com\"}}}"
   }
 }
 
@@ -114,6 +114,10 @@ run "phase1_plan" {
   assert {
     condition     = local.topic["kc-evaluator"] == "projects/kcdda-dgov-hub-nonprod/topics/kc-evaluator-dev" && local.dlq_topic["findings"] == null
     error_message = "Topic resolution."
+  }
+  assert {
+    condition     = toset(keys(google_dataplex_metadata_feed.feed)) == toset(["feed-evaluator"])
+    error_message = "Phase 1 has feed-evaluator only (OD-8)."
   }
   assert {
     condition     = length(google_pubsub_subscription.feed_evaluator.dead_letter_policy) == 1 && length(google_pubsub_subscription.findings_bigquery.dead_letter_policy) == 0

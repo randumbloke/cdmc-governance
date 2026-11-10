@@ -91,7 +91,7 @@ locals {
   # topic names; deployed names carry the environment suffix.
   topic_names = local.platform_env.topics
   topic = {
-    for logical in ["kc-evaluator", "findings", "notifications", "sdp-profiles"] : logical => try(
+    for logical in ["kc-evaluator", "kc-classifier", "findings", "notifications", "sdp-profiles"] : logical => try(
       local.topic_names[logical],
       local.topic_names["${logical}-${var.env}"],
       "projects/${local.hub_project_id}/topics/${logical}-${var.env}",
